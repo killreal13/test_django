@@ -1,0 +1,20 @@
+{% extends 'main.html' %}
+{% load static %}
+{% block content %}
+<div class="content add login_class" style="text-align: center">
+        <div class="box-element add auth-block">
+          <strong>Sign Up</strong>
+          <hr>
+            <form method="post">
+              {% csrf_token %}
+              {% for field in form %}
+              <div class="mb-3">
+                {{ field.label }}:
+                {{ field }}
+              </div>
+              {% endfor %}
+              <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+</div>
+{% endblock content %}
