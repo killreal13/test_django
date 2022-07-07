@@ -3,19 +3,19 @@
 {% block content %}
 <div class="content add login_class" style="text-align: center">
           <strong>Shortener</strong>
-            <form method="post">
+            <form id="user-form" method="post">
                     <div id="user-info">
                         <hr>
                         <div class="form-field">
-                            <input id="Enter link" required class="form-control" type="text" name="link" placeholder="Link..">
+                            <input required class="form-control" type="text" name="link" placeholder="Link..">
                         </div>
                     </div>
                 <input id="accept" class="btn btn-success btn-block" type="submit" value="Continue">
             </form>
 </div>
-{% endblock content %}
 
 <script type="text/javascript">
+    var form = document.getElementById('user-form')
     document.getElementById('accept').addEventListener('click', function(e){
                 submitFormData()
                 })
@@ -26,7 +26,11 @@
 
         fetch(url,{
             method:'POST',
-            headers: {}
-            }
+            headers:{
+                'Content-Type':'application/json'
+            },
+            body:JSON.stringify({'link':link})
+        })
     }
 </script>
+{% endblock content %}
