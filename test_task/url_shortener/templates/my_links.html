@@ -1,0 +1,23 @@
+{% extends 'main.html' %}
+{% load static %}
+{% block content %}
+<div class="content add login_class" style="text-align: center">
+          <strong>Your links</strong>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Long url</th>
+                        <th scope="col">Short url</th>
+                    </tr>
+                </thead>
+            {% for link in links %}
+                <tbody>
+                    <tr>
+                        <td>{{ link.long_url }}</td>
+                        <td>{{ link.short_url }}</td>
+                    </tr>
+                </tbody>
+            {% endfor %}
+            </table>
+</div>
+{% endblock content %}

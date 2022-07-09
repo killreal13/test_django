@@ -1,54 +1,75 @@
-from django.shortcuts import render
-from django.contrib.auth.forms import UserCreationForm
-from django.views.generic.edit import CreateView
+import os
+from django import forms
 from django.urls import reverse_lazy
-from django.views.decorators.csrf import csrf_exempt
-from .models import Link
 from django.forms import ModelForm
-from .utils import shortener as sh
+from django.shortcuts import render, redirect
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-import json
-
-@csrf_exempt
-def main(request):
-    return render(request, 'shortener.html')
-
-
-class ShortenerForm(ModelForm):
-    class Meta:
-        model = Link
-        fields = ['long_url']
-        # template_name = 'shortener.html'
-        # success_url = reverse_lazy('shortener')
-
-
-def shortener(request):
-    result = 'smth'
-    instance = Link.objects.all()
-    if request.method == 'POST':
-        form = ShortenerForm()
-        form.user = User.objects.get(username=request.user)
-        form.save()
-        result = 'Your short url will appear here..'
-    else:
-        form = ShortenerForm()
-        result = Link.Objects.get(user=User.objects.get(username=request.user))[0]
-    return render(request, 'shortener.html', {'form': form, 'smth': result})
-    # def shortener(self, form):
-    #     context = {}
-    #     try:
-    #         data = json.loads(request.body)
-    #         sh_url = sh(r'http://127.0.0.1:8000/', data['link'])
-    #         user = User.objects.get(username=request.user)
-    #         short_link = Link(user=user, long_url=data['link'], short_url=sh_url)
-    #         short_link.save()
-    #     except Exception:
-    #         context['short_url'] = Link.objects.filter(user=request.user).order_by('short_url').reverse()[:1][0]
-    #     return render(request, 'shortener.html', context)
+from django.views.generic.edit import CreateView
+from .models import Link
+from .utils import shortener as sh
 
 
 class SignUp(CreateView):
     form_class = UserCreationForm
     success_url = reverse_lazy('login')
     template_name = 'registration.html'
+
+
+class ShortenerUserForm(ModelForm):
+    class Meta:
+        model = Link
+        fields = ['long_url']
+
+
+class ShortenerForm(forms.Form):
+    long_url = forms.URLField()
+
+
+def return_url(request, url):
+    redirect_queryset = Link.objects.values().get(short_url=request.build_absolute_uri())
+    return redirect(redirect_queryset['long_url'], permanent=True)
+
+
+def shortener(request):
+    if request.method == 'POST':
+        if request.user.is_authenticated:
+            form = ShortenerUserForm(request.POST)
+            if form.is_valid():
+                try:
+                    link = Link.objects.get(user=request.user,
+                                            long_url=form.cleaned_data.get('long_url'))
+                except Exception:
+                    form.instance.user = User.objects.get(username=request.user)
+                    form.save()
+                    link = Link.objects.all().filter(user=request.user)[::-1][0]
+            else:
+                link = ''
+        else:
+            form = ShortenerForm(request.POST)
+            if form.is_valid():
+                try:
+                    link = Link.objects.get(long_url=form.cleaned_data.get('long_url'))
+                except Exception:
+                    short_url = sh(os.environ['HOST_HTTP'], form.cleaned_data.get('long_url'))
+                    link = {'short_url': short_url}
+            else:
+                link = ''
+    else:
+        if request.user.is_authenticated:
+            form = ShortenerUserForm()
+            link = ''
+        else:
+            form = ShortenerForm()
+            link = ''
+    return render(request, 'shortener.html', {'form': form, 'link': link})
+
+
+def user_links(request, id):
+    context = {}
+    try:
+        context['links'] = Link.objects.all().filter(user=id)
+    except Exception:
+        context['links'] = ''
+    return render(request, 'my_links.html', context)
 
