@@ -1,4 +1,3 @@
-import os
 from django import forms
 from django.urls import reverse_lazy
 from django.forms import ModelForm
@@ -7,7 +6,6 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.views.generic.edit import CreateView
 from .models import Link
-from .utils import shortener as sh
 
 
 class SignUp(CreateView):
@@ -51,8 +49,15 @@ def shortener(request):
                 try:
                     link = Link.objects.get(long_url=form.cleaned_data.get('long_url'))
                 except Exception:
-                    short_url = sh(os.environ['HOST_HTTP'], form.cleaned_data.get('long_url'))
-                    link = {'short_url': short_url}
+                    try:
+                        user = User.objects.get(username='Anonymous', password='Anonymous')
+                    except Exception:
+                        user = User(username='Anonymous', password='Anonymous')
+                        user.save()
+                        user = User.objects.get(username='Anonymous', password='Anonymous')
+                    new_url = Link(user=user, long_url=form.cleaned_data.get('long_url'))
+                    new_url.save()
+                    link = Link.objects.all().filter(user=user)[::-1][0]
             else:
                 link = ''
     else:
