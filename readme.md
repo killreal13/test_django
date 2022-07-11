@@ -32,3 +32,5 @@ Shortener
 - os
 - dotenv
 - flake8
+
+(MySQL task solution contained in 'my_sql_test_task_solution.sql' file)
